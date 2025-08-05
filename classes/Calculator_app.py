@@ -1,6 +1,8 @@
 import customtkinter as ct
 from dotenv import load_dotenv
 import os
+import math
+from PIL import Image, ImageTk
 
 load_dotenv()
 
@@ -10,6 +12,7 @@ class Calculator_app:
         self.root = root
         self.root.title(os.getenv('title'))
         self.root.geometry(f'{os.getenv('width')}x{os.getenv('height')}')
+        self.root.resizable(False, False)
 
         ct.set_appearance_mode(os.getenv('theme'))
         ct.set_default_color_theme(os.getenv('color_theme'))
@@ -22,12 +25,30 @@ class Calculator_app:
 
         self.root.bind('<Key>', self.handle_key_press)
 
+    def toggle_menu(self):
+        pass
+
     def handle_key_press(self, event):
         key = event.char
         if key in ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+', '*', '/', '='):
             self.on_button_click(key)
 
     def create_widgets(self):
+        menu_icon = Image.open('icons/menu.png')
+        menu_icon = menu_icon.resize((25, 25))
+
+        menu_icon = ImageTk.PhotoImage(menu_icon)
+
+        self.menu_button = ct.CTkButton(
+            self.root,
+            image=menu_icon,
+            width=25,
+            height=25,
+            command=self.toggle_menu,
+            text='',
+        )
+        self.menu_button.pack(anchor='nw', padx=5, pady=5)
+
         display_frame = ct.CTkFrame(self.root, corner_radius=10)
         display_frame.pack(pady=10, padx=5, fill='x')
         self.display = ct.CTkLabel(
@@ -40,12 +61,13 @@ class Calculator_app:
         )
         self.display.pack(pady=5, padx=5)
 
+
         buttons = [
-            ('7', 0, 0), ('8', 0, 1), ('9', 0, 2), ('/', 0, 3),
-            ('4', 1, 0), ('5', 1, 1), ('6', 1, 2), ('*', 1, 3),
-            ('1', 2, 0), ('2', 2, 1), ('3', 2, 2), ('-', 2, 3),
-            ('0', 3, 0), ('.', 3, 1), ('=', 3, 2), ('+', 3, 3),
-            ('C', 4, 0, 3), ('<', 4, 3)
+            ('7', 0, 0), ('8', 0, 1), ('9', 0, 2), ('/', 0, 3), ('(', 0, 4),
+            ('4', 1, 0), ('5', 1, 1), ('6', 1, 2), ('*', 1, 3), (')', 1, 4),
+            ('1', 2, 0), ('2', 2, 1), ('3', 2, 2), ('-', 2, 3), ('^2', 2, 4),
+            ('0', 3, 0), ('.', 3, 1), ('=', 3, 2), ('+', 3, 3), ('√', 3, 4),
+            ('C', 4, 0, 4), ('<', 4, 4)
         ]
 
         buttons_frame = ct.CTkFrame(self.root, corner_radius=10)
@@ -97,7 +119,23 @@ class Calculator_app:
             else:
                 self.result_var.set('0')
 
-        elif text.isdigit() or text in ('-', '+', '*', '/'):
+        elif text == '√':
+            try:
+                res = str(math.sqrt(float(self.current_input)))
+                self.result_var.set(res)
+                self.current_input = res
+            except:
+                self.result_var.set('Некорректное значение')
+
+        elif text == '^2':
+            try:
+                res = str(math.pow(float(self.current_input), 2))
+                self.result_var.set(res)
+                self.current_input = res
+            except:
+                self.result_var.set('Некорректное значение')
+
+        elif text.isdigit() or text in ('-', '+', '*', '/', '.', '(', ')'):
             self.current_input += text
             self.result_var.set(self.current_input)
 
