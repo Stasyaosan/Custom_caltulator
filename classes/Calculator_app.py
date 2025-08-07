@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 import math
 from PIL import Image, ImageTk
+import json
 
 load_dotenv()
 
@@ -16,10 +17,18 @@ class Calculator_app:
 
         ct.set_appearance_mode(os.getenv('theme'))
         ct.set_default_color_theme(os.getenv('color_theme'))
+
         self.current_input = ''
         self.result_var = ct.StringVar(value='0')
-
         self.current_font = 24
+        self.history_list = []
+
+        # if os.path.exists('history.json'):
+        #     with open('history.json', 'r', encoding='utf-8') as f:
+        #         file = json.load(f)
+        #     list = file['results']
+        #     self.history_list = list
+        #     print(self.history_list)
 
         self.create_widgets()
 
@@ -51,6 +60,17 @@ class Calculator_app:
 
         display_frame = ct.CTkFrame(self.root, corner_radius=10)
         display_frame.pack(pady=10, padx=5, fill='x')
+
+        self.history_display = ct.CTkLabel(
+            display_frame,
+            font=('Arial', 16),
+            text='',
+            width=260,
+            height=40,
+            anchor='e',
+        )
+        self.history_display.pack(padx=5)
+
         self.display = ct.CTkLabel(
             display_frame,
             textvariable=self.result_var,
@@ -60,7 +80,6 @@ class Calculator_app:
             anchor='e'
         )
         self.display.pack(pady=5, padx=5)
-
 
         buttons = [
             ('7', 0, 0), ('8', 0, 1), ('9', 0, 2), ('/', 0, 3), ('(', 0, 4),
@@ -104,6 +123,11 @@ class Calculator_app:
                 result = str(eval(self.current_input))
                 self.result_var.set(result)
                 self.current_input = result
+                self.history_list.append(result)
+                d = {'results': self.history_list}
+
+                with open('history.json', 'w', encoding='utf-8') as f:
+                    json.dump(self.history_list, f, indent=4)
             except:
                 self.current_input = ''
                 self.result_var.set('Некорректное выражение')
