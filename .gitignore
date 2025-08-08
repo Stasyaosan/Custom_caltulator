@@ -2,3 +2,4 @@
 .idea
 history.json
 __pycache__
+classes/__pycache__

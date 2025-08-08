@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 import os
 import math
 from PIL import Image, ImageTk
-import json
+from json_op import Json
+
 
 load_dotenv()
 
@@ -21,14 +22,12 @@ class Calculator_app:
         self.current_input = ''
         self.result_var = ct.StringVar(value='0')
         self.current_font = 24
-        self.history_list = []
+        self.history_str = ct.StringVar(value='')
+        self.m = False
 
-        # if os.path.exists('history.json'):
-        #     with open('history.json', 'r', encoding='utf-8') as f:
-        #         file = json.load(f)
-        #     list = file['results']
-        #     self.history_list = list
-        #     print(self.history_list)
+        self.json_op = Json('history.json')
+        self.history_list = self.json_op.load_json()
+        print(self.history_list)
 
         self.create_widgets()
 
@@ -124,11 +123,11 @@ class Calculator_app:
                 self.result_var.set(result)
                 self.current_input = result
                 self.history_list.append(result)
-                d = {'results': self.history_list}
+                self.m = True
 
-                with open('history.json', 'w', encoding='utf-8') as f:
-                    json.dump(self.history_list, f, indent=4)
-            except:
+                self.json_op.upload_json({'results': self.history_list})
+            except Exception as e:
+                print(e)
                 self.current_input = ''
                 self.result_var.set('Некорректное выражение')
 
@@ -148,6 +147,7 @@ class Calculator_app:
                 res = str(math.sqrt(float(self.current_input)))
                 self.result_var.set(res)
                 self.current_input = res
+                self.m = True
             except:
                 self.result_var.set('Некорректное значение')
 
@@ -156,11 +156,16 @@ class Calculator_app:
                 res = str(math.pow(float(self.current_input), 2))
                 self.result_var.set(res)
                 self.current_input = res
+                self.m = True
             except:
                 self.result_var.set('Некорректное значение')
 
         elif text.isdigit() or text in ('-', '+', '*', '/', '.', '(', ')'):
-            self.current_input += text
+            if self.m:
+                self.current_input = text
+                self.m = False
+            else:
+                self.current_input += text
             self.result_var.set(self.current_input)
 
         if len(self.current_input) > 18:
