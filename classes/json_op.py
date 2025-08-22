@@ -11,7 +11,7 @@ class Json:
             try:
                 with open(self.json_path, 'r', encoding='utf-8') as f:
                     file = json.load(f)
-                return file['results']
+                return file
             except json.decoder.JSONDecodeError:
                 return []
         else:

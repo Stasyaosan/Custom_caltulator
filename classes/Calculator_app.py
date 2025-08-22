@@ -6,6 +6,9 @@ from PIL import Image, ImageTk
 import re
 import numpy
 from classes.Graf import Graf
+from classes.json_op import Json
+from classes.ValCurs import ValCurs
+
 load_dotenv()
 
 
@@ -15,6 +18,8 @@ class Calculator_app:
         self.root.title(os.getenv('title'))
         self.root.geometry(f"{os.getenv('width')}x{os.getenv('height')}")
         self.root.resizable(False, False)
+        self.json_history_objects = Json('history.json')
+        self.history_list = self.json_history_objects.load_json()
 
         ct.set_appearance_mode(os.getenv('theme'))
         ct.set_default_color_theme(os.getenv('color_theme'))
@@ -26,9 +31,13 @@ class Calculator_app:
         self.current_mode = 'Обычный'
         self.graph_frame = None
 
+        v = ValCurs()
+        v.parse_with_xml()
+        self.valute_dict = v.parse_with_xml()
+
         self.main_frame = ct.CTkFrame(self.root)
         self.main_frame.pack(fill='both', expand=True)
-
+        self.history_text = ct.StringVar(value='')
         self.create_widgets()
         self.root.bind('<Key>', self.handle_key_press)
 
@@ -36,9 +45,29 @@ class Calculator_app:
         self.current_mode = mode
         if mode == 'Графики':
             self.create_graph_interface()
+        elif mode == 'Курс валют':
+            self.create_valute_interface()
         else:
-            self.hide_graph_interface()
+            # self.hide_graph_interface()
             self.create_calculator_interface()
+
+    def create_valute_interface(self):
+        for widget in self.content_frame.winfo_children():
+            widget.destroy()
+        number_ = ct.CTkEntry(
+            master=self.content_frame,
+            placeholder_text='Введите сумму'
+        )
+        number_.pack(pady=10, padx=10)
+
+        list_ = ct.CTkComboBox(
+            master=self.content_frame,
+            values=list(self.valute_dict.keys()),
+            state='readonly'
+        )
+
+        list_.pack(padx=10, pady=10)
+        list_.set('Выберите вариант')
 
     def create_graph_interface(self):
         for widget in self.content_frame.winfo_children():
@@ -87,16 +116,16 @@ class Calculator_app:
 
     def plot_function(self):
         function_text = self.function_entry.get()
+
         try:
             x_min = float(self.xmin_entry.get())
             x_max = float(self.xmax_entry.get())
             if x_min >= x_max:
                 raise ValueError('Неверный диапазон')
         except ValueError:
-            self.result_var.set('Неверный диапазон')
+            self.result_var.set('Ошибка в диапазоне')
             return
         x = numpy.linspace(x_min, x_max, int(os.getenv('x_count')))
-
         Graf(self.graph_frame, x, function_text)
 
     def hide_graph_interface(self):
@@ -183,9 +212,12 @@ class Calculator_app:
             self.menu_button.configure(text='>')
 
     def handle_key_press(self, event):
-        key = event.char
-        if key in ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+', '*', '/', '='):
-            self.on_button_click(key)
+        if self.current_mode != 'Обычный':
+            return
+        else:
+            key = event.char
+            if key in ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+', '*', '/', '='):
+                self.on_button_click(key)
 
     def create_widgets(self):
         self.menu_frame = ct.CTkFrame(self.main_frame, width=120)
@@ -230,6 +262,7 @@ class Calculator_app:
             text='',
             height=40,
             anchor='e',
+            textvariable=self.history_text
         )
         self.history_display.pack(fill='x', padx=5)
 
@@ -275,8 +308,15 @@ class Calculator_app:
         if text == '=':
             try:
                 result = str(eval(self.current_input))
+
+                self.history_text.set(f'{self.current_input}={result}')
+                d = {'v': self.current_input, 'result': f'{result}'}
+                self.history_list.append(d)
+                self.json_history_objects.upload_json(self.history_list)
+
                 self.result_var.set(result)
                 self.current_input = result
+                self.history_list = self.json_history_objects.load_json()
             except:
                 self.current_input = ''
                 self.result_var.set('Ошибка')
@@ -309,7 +349,7 @@ class Calculator_app:
             self.current_input += text
             self.result_var.set(self.current_input)
 
-        if len(self.current_input) > 18:
-            self.display.configure(font=('Arial', 20))
-        else:
-            self.display.configure(font=('Arial', 24))
+        # if len(self.current_input) > 18:
+        #     self.display.configure(font=('Arial', 20))
+        # else:
+        #     self.display.configure(font=('Arial', 24))
