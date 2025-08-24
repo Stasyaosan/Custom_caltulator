@@ -8,6 +8,7 @@ import numpy
 from classes.Graf import Graf
 from classes.json_op import Json
 from classes.ValCurs import ValCurs
+from tkinter.messagebox import showerror
 
 load_dotenv()
 
@@ -52,12 +53,28 @@ class Calculator_app:
             self.create_calculator_interface()
 
     def create_valute_interface(self):
+        def btn_ok():
+            a = ''.join(filter(lambda x: x.isdigit() or x == '.', number_.get()))
+            if list_.get() == 'Выберите вариант':
+                showerror('Error', 'Выберите валюту')
+                return
+
+            res = float(a) * float(self.valute_dict[list_.get()].replace(',', '.'))
+            number_.delete(0, ct.END)
+            number_.insert(0, f'{res:.2f}')
+
+        def on_key_release(event):
+            a = ''.join(filter(lambda x: x.isdigit() or x == '.', number_.get()))
+            number_.delete(0, ct.END)
+            number_.insert(0, a)
+
         for widget in self.content_frame.winfo_children():
             widget.destroy()
         number_ = ct.CTkEntry(
             master=self.content_frame,
             placeholder_text='Введите сумму'
         )
+        number_.bind('<KeyRelease>', on_key_release)
         number_.pack(pady=10, padx=10)
 
         list_ = ct.CTkComboBox(
@@ -68,6 +85,9 @@ class Calculator_app:
 
         list_.pack(padx=10, pady=10)
         list_.set('Выберите вариант')
+
+        btn = ct.CTkButton(master=self.content_frame, text='Oк', command=btn_ok)
+        btn.pack()
 
     def create_graph_interface(self):
         for widget in self.content_frame.winfo_children():
