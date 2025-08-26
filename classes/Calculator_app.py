@@ -70,6 +70,17 @@ class Calculator_app:
 
         for widget in self.content_frame.winfo_children():
             widget.destroy()
+
+        self.menu_button = ct.CTkButton(
+            self.content_frame,
+            image=self.menu_icon,
+            width=30,
+            height=30,
+            command=self.toggle_menu,
+            text='>',
+            compound='left'
+        )
+        self.menu_button.pack(padx=5, pady=5, anchor='nw')
         number_ = ct.CTkEntry(
             master=self.content_frame,
             placeholder_text='Введите сумму'
